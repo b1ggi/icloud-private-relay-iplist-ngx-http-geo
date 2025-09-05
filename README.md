@@ -12,6 +12,10 @@ This project provides a comprehensive list of auto-generated iCloud Private Rela
 
 This repository aims to provide an up-to-date and automatically generated (from [original IP feed](https://mask-api.icloud.com/egress-ip-ranges.csv)) list of iCloud Private Relay egress IP addresses in various formats. By using these IP address lists, you can easily integrate iCloud Private Relay support into your network infrastructure, such as firewalls, proxy servers, or load balancers.
 
+## Dependencies
+[CIDR Merger 1.1.3](https://github.com/zhanhb/cidr-merger/releases/download/v1.1.3/cidr-merger-linux-amd64) is a dependency of the project.
+
+
 ## Directory Structure
 
 The repository is organized as follows:
