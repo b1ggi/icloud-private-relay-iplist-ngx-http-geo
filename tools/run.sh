@@ -17,3 +17,6 @@ curl -sL "https://mask-api.icloud.com/egress-ip-ranges.csv" | cut -d ',' -f 1 > 
 awk '{print $1 " yes;"}' ip-ranges.txt > ip-ranges-geo.txt
 awk '{print $1 " yes;"}' ipv4/ipv4-ranges.txt > ipv4/ipv4-ranges-geo.txt
 awk '{print $1 " yes;"}' ipv6/ipv6-ranges.txt > ipv6/ipv6-ranges-geo.txt
+wc -l ip-ranges-geo.txt
+wc -l ipv4/ipv4-ranges-geo.txt
+wc -l ipv6/ipv6-ranges-geo.txt
