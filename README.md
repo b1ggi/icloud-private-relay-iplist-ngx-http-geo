@@ -25,6 +25,7 @@ The repository is organized as follows:
 
 ## How to Use
 
+```
 http {
     geo $icloud_relay {
         include /etc/nginx/ip-ranges-geo.txt;
@@ -43,6 +44,7 @@ http {
         index index.html;
     }
 }
+```
 
 ## Updates and Maintenance
 
