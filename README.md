@@ -2,7 +2,7 @@
 
 ![iCloud Private Relay](https://support.apple.com/library/content/dam/edam/applecare/images/en_US/icloud/icloud-private-relay-how-private-relay-works-path-through-relays.png)
 
-This project provides a comprehensive list of auto-generated iCloud Private Relay egress IP addresses in various formats (iptables ipset, JSON, and TXT) for easy integration into your network infrastructure.
+This project provides a comprehensive list of auto-generated iCloud Private Relay egress IP addresses in NGINX Geo Format for easy integration into your network infrastructure.
 
 ## What is iCloud Private Relay?
 
@@ -17,25 +17,32 @@ This repository aims to provide an up-to-date and automatically generated (from 
 The repository is organized as follows:
 
 
-- **ip-ranges.ipset**: IP address list in `ipset` format containing both IPv4 and IPv6 addresses.
-- **ip-ranges.json**: IP address list in JSON format containing both IPv4 and IPv6 addresses.
-- **ip-ranges.txt**: IP address list in plain text format containing both IPv4 and IPv6 addresses.
+- **ip-ranges-geo.txt**: IP address list in plain text format containing both IPv4 and IPv6 addresses.
 - **ipv4**: Subdirectory containing IPv4-specific IP address lists.
-    - **ipv4-ranges.ipset**: IP address list in `ipset` format containing only IPv4 addresses.
-    - **ipv4-ranges.json**: IP address list in JSON format containing only IPv4 addresses.
-    - **ipv4-ranges.txt**: IP address list in plain text format containing only IPv4 addresses.
+    - **ipv4-ranges-geo.txt**: IP address list in plain text format containing only IPv4 addresses.
 - **ipv6**: Subdirectory containing IPv6-specific IP address lists.
-    - **ipv6-ranges.ipset**: IP address list in `ipset` format containing only IPv6 addresses.
-    - **ipv6-ranges.json**: IP address list in JSON format containing only IPv6 addresses.
-    - **ipv6-ranges.txt**: IP address list in plain text format containing only IPv6 addresses.
+    - **ipv6-ranges-geo.txt**: IP address list in plain text format containing only IPv6 addresses.
 
 ## How to Use
 
-You can use any of the provided IP address lists based on your network infrastructure requirements. For example:
+http {
+    geo $icloud_relay {
+        include /etc/nginx/ip-ranges-geo.txt;
+    }
 
-- If you use iptables with ipset, you can use the `ip-ranges.ipset` or the appropriate IPv4/IPv6 specific `ipset` files.
-- For programmatic access, you may prefer the JSON format (`ip-ranges.json` or specific IPv4/IPv6 JSON files).
-- The plain text format (`ip-ranges.txt` or specific IPv4/IPv6 text files) can be handy for manual configuration or quick reference.
+    server {
+        listen 443 ssl http2;
+        server_name example.com;
+
+        # Zugriff nur erlauben, wenn iCloud Private Relay IP
+        if ($icloud_relay = no) {
+            return 403;
+        }
+
+        root /var/www/html;
+        index index.html;
+    }
+}
 
 ## Updates and Maintenance
 
