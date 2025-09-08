@@ -13,23 +13,24 @@ This project provides a comprehensive list of auto-generated iCloud Private Rela
 This repository aims to provide an up-to-date and automatically generated (from [original IP feed](https://mask-api.icloud.com/egress-ip-ranges.csv)) list of iCloud Private Relay egress IP addresses in various formats. By using these IP address lists, you can easily integrate iCloud Private Relay support into your network infrastructure, such as firewalls, proxy servers, or load balancers.
 
 ## Dependencies
-[CIDR Merger 1.1.3](https://github.com/zhanhb/cidr-merger) is a dependency of the project.
 
+[CIDR Merger 1.1.3](https://github.com/zhanhb/cidr-merger) is a dependency of the project.
 
 ## Directory Structure
 
 The repository is organized as follows:
 
-
 - **ip-ranges-geo.txt**: IP address list in plain text format containing both IPv4 and IPv6 addresses.
 - **ipv4**: Subdirectory containing IPv4-specific IP address lists.
-    - **ipv4-ranges-geo.txt**: IP address list in plain text format containing only IPv4 addresses.
+  - **ipv4-ranges-geo.txt**: IP address list in plain text format containing only IPv4 addresses.
 - **ipv6**: Subdirectory containing IPv6-specific IP address lists.
-    - **ipv6-ranges-geo.txt**: IP address list in plain text format containing only IPv6 addresses.
+  - **ipv6-ranges-geo.txt**: IP address list in plain text format containing only IPv6 addresses.
+- **swag**: optional Subdirectory containing [linuxserver/swag](https://github.com/linuxserver/docker-swag)-specific cron script to download the file ip-ranges-geo.txt daily.
+  - **update-icloud-geo**
 
 ## How to Use
 
-```
+```nginx
 http {
     geo $icloud_relay {
         include /etc/nginx/ip-ranges-geo.txt;
@@ -48,6 +49,112 @@ http {
         index index.html;
     }
 }
+```
+
+## Long Example for SWAG Container
+
+### Create "periodic" folder in $SWAG_CONFIG_FOLDER/etc
+
+```bash
+sudo mkdir etc/periodic
+```
+
+### Create update-icloud-geo file with 755 and root owner
+
+```bash
+sudo touch etc/periodic/update-icloud-geo
+sudo chown root:root etc/periodic/update-icloud-geo
+sudo chmod 755 etc/periodic/update-icloud-geo
+```
+
+### Content of update-icloud-geo
+
+```bash
+#!/bin/sh
+set -eu
+
+URL="https://raw.githubusercontent.com/b1ggi/icloud-private-relay-iplist-ngx-http-geo/refs/heads/main/ip-ranges-geo.txt"
+TARGET_FILE="/config/nginx/icloud-ip-ranges.txt"
+TARGET_USER="abc"
+TARGET_GROUP="abc"
+TARGET_MODE="664"
+
+#Make sure TARGET_FILE Folder is existent:
+mkdir -p "$(dirname "$TARGET_FILE")"
+
+#Create temporary file
+TMP_FILE="$(mktemp)"
+# If File can be downloaded:
+if curl -fsSL --retry 3 "$URL" -o "$TMP_FILE"; then
+    #If Target File not existent   or   Tempfile and Targetfile different:
+    if [ ! -f "$TARGET_FILE" ] || ! cmp -s "$TMP_FILE" "$TARGET_FILE"; then
+        # move Tempfile to /config/nginx/icloud-ip-ranges.txt
+        mv "$TMP_FILE" "$TARGET_FILE"
+        echo "[$(date)] Updated iCloud IP ranges in $TARGET_FILE"
+        # SWAG monitors /config/nginx/, reloads automatically on file changes
+        # Set Owner, Group and Rights
+        chown "$TARGET_USER:$TARGET_GROUP" "$TARGET_FILE"
+        chmod "$TARGET_MODE" "$TARGET_FILE"
+
+    else
+        #Delete Tempfile
+        rm -f "$TMP_FILE"
+        echo "[$(date)] No change in iCloud IP ranges"
+    fi
+#If Download fails:
+else
+    rm -f "$TMP_FILE"
+    echo "[$(date)] ERROR: Could not fetch $URL" >&2
+fi
+```
+
+### Mount Script into a file in the daily cron folder in your docker_stack.yml
+
+```yaml
+volumes:
+  - ./swagconfig/etc/periodic/update-icloud-geo:/etc/periodic/daily/update-icloud-geo
+```
+
+### Include the file for example in your maxmind.conf
+
+```nginx
+geoip2 /config/geoip2db/GeoLite2-City.mmdb {
+
+...
+
+geo $lan-ip {
+    default no;
+    10.0.0.0/8 yes;
+    172.16.0.0/12 yes;
+    192.168.0.0/16 yes;
+    127.0.0.1 yes;
+    fd00::/8 yes;
+}
+
+geo $icloud-relay {
+    default no;
+    include /config/nginx/icloud-ip-ranges.txt;
+}
+```
+
+### Include condition in a ../proxy-conf/*.subdomain.conf
+
+```nginx
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name _template.*;
+
+    include /config/nginx/ssl.conf;
+
+    client_max_body_size 0;
+
+    #conditional whitelist for icloud-private-relay egress ip
+    if ($lan-ip = yes) { set $geo-whitelist yes; }
+    if ($icloud-relay = yes) { set $geo-whitelist yes; }
+    if ($geo-whitelist = no) { return 404; }
+...
 ```
 
 ## Updates and Maintenance

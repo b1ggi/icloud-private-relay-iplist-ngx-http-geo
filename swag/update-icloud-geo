@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+
+URL="https://raw.githubusercontent.com/b1ggi/icloud-private-relay-iplist-ngx-http-geo/refs/heads/main/ip-ranges-geo.txt"
+TARGET_FILE="/config/nginx/icloud-ip-ranges.txt"
+TARGET_USER="abc"
+TARGET_GROUP="abc"
+TARGET_MODE="664"
+
+#Make sure TARGET_FILE Folder is existent:
+mkdir -p "$(dirname "$TARGET_FILE")"
+
+#Create temporary file
+TMP_FILE="$(mktemp)"
+# If File can be downloaded:
+if curl -fsSL --retry 3 "$URL" -o "$TMP_FILE"; then
+    #If Target File not existent   or   Tempfile and Targetfile different:
+    if [ ! -f "$TARGET_FILE" ] || ! cmp -s "$TMP_FILE" "$TARGET_FILE"; then
+        # move Tempfile to /config/nginx/icloud-ip-ranges.txt
+        mv "$TMP_FILE" "$TARGET_FILE"
+        echo "[$(date)] Updated iCloud IP ranges in $TARGET_FILE"
+        # SWAG monitors /config/nginx/, reloads automatically on file changes
+        # Set Owner, Group and Rights
+        chown "$TARGET_USER:$TARGET_GROUP" "$TARGET_FILE"
+        chmod "$TARGET_MODE" "$TARGET_FILE"
+
+    else
+        #Delete Tempfile
+        rm -f "$TMP_FILE"
+        echo "[$(date)] No change in iCloud IP ranges"
+    fi
+#If Download fails:
+else
+    rm -f "$TMP_FILE"
+    echo "[$(date)] ERROR: Could not fetch $URL" >&2
+fi
