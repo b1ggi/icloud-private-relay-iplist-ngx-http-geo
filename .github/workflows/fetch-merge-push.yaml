@@ -8,7 +8,7 @@ on:
       - tools/run.sh
       - .github/workflows/**
   schedule:
-    - cron: 10 5 * * *
+    - cron: 50 1 * * *
 jobs:
   main:
     runs-on: ubuntu-latest
