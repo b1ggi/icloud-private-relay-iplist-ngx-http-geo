@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ## build basics
-curl -sL "https://mask-api.icloud.com/egress-ip-ranges.csv" | cut -d ',' -f 1 > egress-ip-ranges.txt && \
+curl -sSL "https://mask-api.icloud.com/egress-ip-ranges.csv" | cut -d ',' -f 1 > egress-ip-ranges.txt && \
   grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(/[0-9]+)?$' egress-ip-ranges.txt > ipv4-only.txt && \
   grep -E '^[0-9a-fA-F:]+(/[0-9]+)?$' egress-ip-ranges.txt > ipv6-only.txt && \
   wc -l egress-ip-ranges.txt && \
