@@ -59,15 +59,15 @@ http {
 sudo mkdir etc/periodic
 ```
 
-### Create update-icloud-geo file with 755 and root owner
+### Create updateicloudgeo file with 755 and root owner
 
 ```bash
-sudo touch etc/periodic/update-icloud-geo
-sudo chown root:root etc/periodic/update-icloud-geo
-sudo chmod 755 etc/periodic/update-icloud-geo
+sudo touch etc/periodic/updateicloudgeo
+sudo chown root:root etc/periodic/updateicloudgeo
+sudo chmod 755 etc/periodic/updateicloudgeo
 ```
 
-### Content of update-icloud-geo
+### Content of updateicloudgeo
 
 ```bash
 #!/bin/sh
@@ -112,7 +112,7 @@ fi
 
 ```yaml
 volumes:
-  - ./swagconfig/etc/periodic/update-icloud-geo:/etc/periodic/daily/update-icloud-geo
+  - ./swagconfig/etc/periodic/updateicloudgeo:/etc/periodic/daily/updateicloudgeo
 ```
 
 ### Include the file for example in your maxmind.conf
